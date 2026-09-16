@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
+    "ClientDomainsTableName": "aos_clienthubwhitelistdomain",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=226bb25a-46ee-4a5f-ab20-2f1d721fe739;IngestionEndpoint=https://westeurope-5.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/;ApplicationId=62cfe3d7-3d73-497b-a871-7c70aeed3530",
+    "ClientId": "",
+    "ClientSecret": "",
+    "TenantId": "",
+    "DataverseUrl": ""
+  }
+}
