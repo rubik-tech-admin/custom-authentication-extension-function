@@ -40,6 +40,5 @@ jobs:
         id: fa
         with:
           app-name: 'CustomAuthenticationExtensions-api'
-          slot-name: 'staging'
           package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD }}
