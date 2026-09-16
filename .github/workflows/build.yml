@@ -1,0 +1,108 @@
+name: Build
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types:
+        - opened
+        - closed
+        - synchronize
+
+jobs:
+
+  build:
+    strategy:
+      matrix:
+        configuration: [Release]
+
+    runs-on: ubuntu-latest #windows-latest
+
+    env:
+      Solution_Name: CustomAuthenticationsExtensions.API.slnx
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: 'Get Previous tag'
+      id: previoustag
+      uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      with:
+          fallback: 1.0.0 # Optional fallback tag to use when no tag can be found
+
+    - name: Output previous tag
+      run: echo ${{ steps.previoustag.outputs.tag }}
+
+    - name: 'Get next semantic version'
+      id: semvers
+      uses: "WyriHaximus/github-action-next-semvers@v1"
+      with:
+          version: ${{ steps.previoustag.outputs.tag }}
+
+    - name: Setup NuGet.exe for use with actions
+      uses: NuGet/setup-nuget@v1.2.0
+      with:
+        nuget-version: latest # optional, default is latest
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore  
+
+    - name: Dotnet build
+      run: dotnet build /property:Version=${{ steps.semvers.outputs.patch }}
+
+    outputs:
+      patchVersionTag: ${{ steps.semvers.outputs.patch }}
+      minorVersionTag: ${{ steps.semvers.outputs.minor }}
+      majorVersionTag: ${{ steps.semvers.outputs.major }}
+  
+  tag:
+    needs: build
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest #windows-latest
+    outputs:
+      patch_tag: ${{ needs.build.outputs.patchVersionTag }}
+      minor_tag: ${{ needs.build.outputs.minorVersionTag }}
+      major_tag: ${{ needs.build.outputs.majorVersionTag }}
+    steps:
+      - name: Create patch version increment tag
+        if: ${{ startsWith(github.event.pull_request.head.ref, 'bugfix/') }}
+        uses: tvdias/github-tagger@v0.0.1
+        with:
+          repo-token: ${{ secrets.CREATE_TAG_KEY }}
+          tag: ${{ needs.build.outputs.patchVersionTag }}  
+          
+      - name: Create patch version increment tag
+        if: ${{ startsWith(github.event.pull_request.head.ref, 'update/') }}
+        uses: tvdias/github-tagger@v0.0.1
+        with:
+          repo-token: ${{ secrets.CREATE_TAG_KEY }}
+          tag: ${{ needs.build.outputs.patchVersionTag }}  
+   
+      - name: Create minor version increment tag
+        if: ${{ startsWith(github.event.pull_request.head.ref, 'feature/') }}
+        uses: tvdias/github-tagger@v0.0.1
+        with:
+          repo-token: ${{ secrets.CREATE_TAG_KEY }}
+          tag: ${{ needs.build.outputs.minorVersionTag }}
+          
+      - name: Create major version increment tag
+        if: ${{ startsWith(github.event.pull_request.head.ref, 'release/') }}
+        uses: tvdias/github-tagger@v0.0.1
+        with:
+          repo-token: ${{ secrets.CREATE_TAG_KEY }}
+          tag: ${{ needs.build.outputs.majorVersionTag }} 
+      
+  donttag:
+    needs: build
+    if: github.event.pull_request.merged == false
+    runs-on: ubuntu-latest #windows-latest
+    steps:
+      - name: Echo
+        run: echo "Not tagging because merged is false for" ${{ github.ref }}
